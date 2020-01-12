@@ -136,3 +136,7 @@ models/
 *.yaml
 *.pkl
 *.h5s
+
+# Pycharm
+.idea/
+
