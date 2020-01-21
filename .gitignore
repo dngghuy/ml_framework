@@ -136,6 +136,8 @@ models/
 *.yaml
 *.pkl
 *.h5s
+*.jpeg
+Visualize/
 
 # Pycharm
 .idea/
