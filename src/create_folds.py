@@ -47,7 +47,7 @@ class CreatingFolds:
         """
         assert isinstance(input_df, pd.DataFrame), f"The input should be pandas.DataFrame, here {type(input_df)}"
         input_df['kfold'] = -1
-        input_df = input_df.sample(frac=1, random_state=7664).reset_index(drop=False)
+        input_df = input_df.sample(frac=1, random_state=7664).reset_index(drop=True)
         print('Making validation')
         self.style_callable(input_df, self.numfolds)
 
@@ -61,4 +61,3 @@ if __name__ == '__main__':
     create_folds = CreatingFolds(numfolds=dispatcher.NUM_FOLDS,
                                  style='default')
     create_folds(train_df)
-
