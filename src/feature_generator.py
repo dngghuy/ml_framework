@@ -82,6 +82,26 @@ def fill_na_max(df, to_int=False):
     return df
 
 
+def fill_na_str(df, fill_str='NA'):
+    """
+    Fill NA by some defined string
+    """
+    df = df.fillna(fill_str)
+
+    return df
+
+
+class FillNAStr(TransformerMixin):
+    def __init__(self, fill_str='NA'):
+        self.fill_str = str(fill_str)
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return fill_na_str(X, self.fill_str)
+
+
 class FillNA(TransformerMixin):
     style_dict = {
         'mean': fill_na_mean,
@@ -100,3 +120,23 @@ class FillNA(TransformerMixin):
 
     def transform(self, X, y=None):
         return self.style_callable(X, self.to_int)
+
+
+if __name__ == '__main__':
+    import pandas as pd
+    import pathlib
+    sample_path = pathlib.Path(__file__).parent.parent / 'data' / 'cat_in_the_dat' / 'train.csv'
+    sample_df = pd.read_csv(sample_path)
+    #feature_cols = [i for i in list(sample_df.columns) if i not in ['id', 'target']]
+    print(sample_df)
+    print(sample_df.isna().any())
+    print(sample_df.dtypes)
+
+    bin_4 = Pipeline([
+        ('selector', Selector(key='bin_4')),
+        ('fillna_str', FillNAStr(fill_str='NA'))
+    ])
+
+    sample_df['bin_4'] = bin_4.fit_transform(sample_df)
+    print(sample_df)
+    print(sample_df.isna().any())
