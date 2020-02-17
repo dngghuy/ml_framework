@@ -29,14 +29,46 @@ class Selector(BaseEstimator, TransformerMixin):
         return X[self.key]
 
 
+class Drop(BaseEstimator, TransformerMixin):
+    """
+    Transformer to return database with some specified columns dropped out.
+    """
+    def __init__(self, key_drop):
+        if not isinstance(key_drop, list):
+            self.key_drop = [key_drop]
+        else:
+            self.key_drop = key_drop
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return X.drop(self.key_drop, axis=1)
+
+
+# Customized for google basketball woman project
+# Baseline feature set
+# This baseline feature set is based on dispatcher.WDSTAGE1_WNCAA_COMPACT_RESULTS
+# and dispatcher.WDSTAGE1_WNCAA_SEED
+
+
+
+
+# FEATURE DICTIONARY
+FEATURES = {
+    'fep_naive': (('feature_naive', feature_process1), ('taret_naive', target_process1)),
+    'fep_standardize': (('feature_standardize', feature_process2), ('target_standardize', target_process2))
+}
+
+
 if __name__ == '__main__':
     import pandas as pd
     import pathlib
     from . import dispatcher
     ## Using cat_in_the_dat data for testing ##
-    sample_path = pathlib.Path(__file__).parent.parent / 'data' / 'cat_in_the_dat' / 'train.csv'
-    sample_df = pd.read_csv(sample_path)
-    sample_train = pd.read_csv(dispatcher.SAMPLE_TRAIN_PATH)
+    # sample_path = pathlib.Path(__file__).parent.parent / 'data' / 'cat_in_the_dat' / 'train.csv'
+    # sample_df = pd.read_csv(sample_path)
+    # sample_train = pd.read_csv(dispatcher.SAMPLE_TRAIN_PATH)
     ## Test fill NAs
     # sample_train_cols = list(sample_train.columns)
     # sample_numerical_train_select = ['bin_0', 'bin_1', 'bin_2']

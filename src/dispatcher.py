@@ -4,6 +4,8 @@ from sklearn import ensemble
 # ### CONSTANT SETTINGS ###
 # DATA PATH SETTINGS
 DATA_PATH = pathlib.Path(__file__).parent.parent / 'data'
+VISUALIZE_FOLDER = pathlib.Path(__file__).parent.parent / 'visualizations'
+MODELS_FOLDER = pathlib.Path(__file__).parent.parent / 'models'
 
 
 # PER-PRJ SETTINGS

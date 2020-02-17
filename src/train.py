@@ -23,8 +23,8 @@ utils.check_make_dirs(dispatcher.VISUALIZE_FOLDER)
 utils.check_make_dirs(dispatcher.MODELS_FOLDER)
 
 
-TRAINING_DATA = dispatcher.DEFAULT_TRAIN_CSV
-NUM_FOLDS = dispatcher.NUM_FOLDS
+# TRAINING_DATA = dispatcher.DEFAULT_TRAIN_CSV
+# NUM_FOLDS = dispatcher.NUM_FOLDS
 
 if args.model:
     MODEL = args.model
