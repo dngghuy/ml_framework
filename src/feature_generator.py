@@ -51,7 +51,10 @@ class Drop(BaseEstimator, TransformerMixin):
 # This baseline feature set is based on dispatcher.WDSTAGE1_WNCAA_COMPACT_RESULTS
 # and dispatcher.WDSTAGE1_WNCAA_SEED
 
-
+feature_process1 = {}
+target_process1 = {}
+feature_process2 = {}
+target_process2 = {}
 
 
 # FEATURE DICTIONARY

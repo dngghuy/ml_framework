@@ -35,7 +35,7 @@ def baseline_process_season_results(season_result):
     return season_result
 
 
-def baseline_merge_tourney_results_season_results(tourney_result, season_result):
+def baseline_merge_tourney_results_season_results(tourney_result, season_score):
     tourney_result = pd.merge(tourney_result, season_score, left_on=['Season', 'WTeamID'],
                               right_on=['Season', 'TeamID'], how='left')
     tourney_result.rename(columns={'Score': 'WScoreT'}, inplace=True)
@@ -46,5 +46,7 @@ def baseline_merge_tourney_results_season_results(tourney_result, season_result)
     tourney_result = tourney_result.drop('TeamID', axis=1)
 
     return tourney_result
+
+
 
 
