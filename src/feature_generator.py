@@ -46,21 +46,40 @@ class Drop(BaseEstimator, TransformerMixin):
         return X.drop(self.key_drop, axis=1)
 
 
+# class ToArray(BaseEstimator, TransformerMixin):
+#     """
+#     Transformer to return array from pandas dataframe
+#     """
+#
+
+
+
 # Customized for google basketball woman project
 # Baseline feature set
 # This baseline feature set is based on dispatcher.WDSTAGE1_WNCAA_COMPACT_RESULTS
 # and dispatcher.WDSTAGE1_WNCAA_SEED
 
-feature_process1 = {}
-target_process1 = {}
-feature_process2 = {}
-target_process2 = {}
+select_all = Pipeline([
+    ('drop_target', Drop(key_drop=['target']))
+])
+
+feature_process1 = Pipeline([
+    ('select_all', select_all)
+])
+
+select_target = Pipeline([
+    ('target', Selector(key=['target']))
+])
+
+target_process1 = Pipeline([
+    ('select_target', select_target)
+])
 
 
 # FEATURE DICTIONARY
 FEATURES = {
     'fep_naive': (('feature_naive', feature_process1), ('taret_naive', target_process1)),
-    'fep_standardize': (('feature_standardize', feature_process2), ('target_standardize', target_process2))
+    # 'fep_standardize': (('feature_standardize', feature_process2), ('target_standardize', target_process2))
 }
 
 
@@ -101,18 +120,18 @@ if __name__ == '__main__':
     # new_sample = feature_process.fit_transform(sample_train)
 
     ## Test label encoder
-    sample_lbl_encoder = Pipeline([
-        ('selector', Selector(key=['ord_2', 'ord_3'])),
-        ('fill_cat', categorical.FillNAStr(fill_str='NA')),
-        ('lbl_encdr', categorical.CategoricalLabelEncoding())
-    ])
-    new_sample = sample_lbl_encoder.fit_transform(sample_train)
-
-    print('#### After preprocessing')
-    new_sample_df = pd.DataFrame(new_sample)
-    new_sample_df.columns = ['ord_2', 'ord_3']
-    print(new_sample_df.head())
-    print(sample_lbl_encoder.named_steps['lbl_encdr'].label_encoders['ord_3'].classes_)
+    # sample_lbl_encoder = Pipeline([
+    #     ('selector', Selector(key=['ord_2', 'ord_3'])),
+    #     ('fill_cat', categorical.FillNAStr(fill_str='NA')),
+    #     ('lbl_encdr', categorical.CategoricalLabelEncoding())
+    # ])
+    # new_sample = sample_lbl_encoder.fit_transform(sample_train)
+    #
+    # print('#### After preprocessing')
+    # new_sample_df = pd.DataFrame(new_sample)
+    # new_sample_df.columns = ['ord_2', 'ord_3']
+    # print(new_sample_df.head())
+    # print(sample_lbl_encoder.named_steps['lbl_encdr'].label_encoders['ord_3'].classes_)
     # new_sample_df.columns = sample_numerical_train_select + sample_categorical_train_select + sample_other_select
     #
 

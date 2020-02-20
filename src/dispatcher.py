@@ -47,6 +47,8 @@ NEW_NAME_DICT = {
     'ULL': 'Louisiana'
 }
 
+NUM_FOLDS = 5
+
 # MODEL SETTINGS
 
 MODELS = {
@@ -58,3 +60,7 @@ MODELS = {
                                                 verbose=2)
 }
 
+MODELS_GRID_PARAMS = {
+    'randomforest': {'n_estimators': [10, 100, 200]},
+    'extratress': {'n_estimators': [10, 100, 200]}
+}

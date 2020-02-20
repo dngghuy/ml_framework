@@ -50,6 +50,7 @@ def baseline_merge_tourney_results_season_results(tourney_result, season_score):
 
 
 if __name__ == '__main__':
+    # Ver1
     tourney_result = pd.read_csv(f'{dispatcher.WDSTAGE1_WNCAA_COMPACT_RESULTS}')
     tourney_seed = pd.read_csv(f'{dispatcher.WDSTAGE1_WNCAA_SEEDS}')
     tourney_result = tourney_result.drop(['DayNum', 'WScore', 'LScore', 'WLoc', 'NumOT'], axis=1)
@@ -78,8 +79,8 @@ if __name__ == '__main__':
     tourney_lose_result['Seed_diff'] = tourney_lose_result['Seed1'] - tourney_lose_result['Seed2']
     tourney_lose_result['ScoreT_diff'] = tourney_lose_result['ScoreT1'] - tourney_lose_result['ScoreT2']
 
-    tourney_win_result['result'] = 1
-    tourney_lose_result['result'] = 0
+    tourney_win_result['target'] = 1
+    tourney_lose_result['target'] = 0
     tourney_result = pd.concat((tourney_win_result, tourney_lose_result)).reset_index(drop=True)
 
     utils.check_make_dirs(dispatcher.CUSTOM_DATA_FOLDER)

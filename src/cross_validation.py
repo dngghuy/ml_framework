@@ -47,11 +47,12 @@ class CrossValidation:
         self.dataframe['kfold'] = -1
 
     def split(self):
+        print(f"Start making folds for the {self.problem_type} problem")
         if self.problem_type in ['binary_classification', 'multiclass_classification']:
             assert self.num_targets == 1, f"Invalid number of targets for this problem type: Expect 1, here {self.num_targets}"
             target = self.target_cols[0]
             unique_values = self.dataframe[target].nunique()
-            assert unique_values == 1, f"Only one unique value found!"
+            assert unique_values != 1, f"Only one unique value found!"
             kf = model_selection.StratifiedKFold(n_splits=self.num_folds,
                                                  shuffle=(not self.shuffle))
             for fold, (train_idx, val_idx) in enumerate(kf.split(X=self.dataframe, y=self.dataframe[target].values)):
