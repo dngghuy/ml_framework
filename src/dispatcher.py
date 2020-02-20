@@ -35,6 +35,8 @@ WDSTAGE1_TEAMS = WDATA_STAGE1 / 'WTeams.csv'
 WDSTAGE1_TEAM_SPELLINGS = WDATA_STAGE1 / 'WTeamSpellings.csv'
 CUSTOM_DATA_FOLDER = KAGGLE_GBW_FOLDER / 'CustomData'
 CUSTOM_BASELINE_FEATURE_CSV = CUSTOM_DATA_FOLDER / 'baseline_feature.csv'
+CUSTOM_BASELINE_TEST_CSV = CUSTOM_DATA_FOLDER / 'baseline_test.csv'
+SUBMISSION_FOLDER = KAGGLE_GBW_FOLDER / 'submissions'
 
 NEW_NAME_DICT = {
     'Albany NY': 'SUNY Albany',
@@ -54,7 +56,7 @@ NUM_FOLDS = 5
 MODELS = {
     'randomforest': ensemble.RandomForestClassifier(n_estimators=200,
                                                     n_jobs=-1,
-                                                    verbose=2),
+                                                    verbose=0),
     'extratress': ensemble.ExtraTreesClassifier(n_estimators=200,
                                                 n_jobs=-1,
                                                 verbose=2)

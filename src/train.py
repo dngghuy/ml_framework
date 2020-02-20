@@ -3,12 +3,12 @@ import numpy as np
 import joblib
 import argparse
 import matplotlib.pyplot as plt
+import time
 from sklearn import metrics
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from tqdm import tqdm
 from . import feature_generator
-from . import feature_processing
 from . import dispatcher
 from . import utils
 from . import cross_validation
@@ -23,6 +23,7 @@ args = parser.parse_args()
 
 utils.check_make_dirs(dispatcher.VISUALIZE_FOLDER)
 utils.check_make_dirs(dispatcher.MODELS_FOLDER)
+utils.check_make_dirs(dispatcher.SUBMISSION_FOLDER)
 
 
 # TRAINING_DATA = dispatcher.DEFAULT_TRAIN_CSV
@@ -70,15 +71,29 @@ def plotting_ROC_curves(list_y_true, list_y_pred_prob, saved_name=None):
 
 
 class TrainWithFEP_CV:
-    def __init__(self, model_info, additional_params={}, feature_engineer_pipeline_info=None, target_pipeline_info=None):
+    def __init__(self, model_info, version_name=None, additional_params={},
+                 feature_engineer_pipeline_info=None, target_pipeline_info=None,
+                 save_meta_feature=False, make_test_prediction=False):
         self.feature_engineer_pipeline_name, self.feature_engineer_pipeline = feature_engineer_pipeline_info
         self.model = model_info
         self.target_pipeline_name, self.target_pipeline = target_pipeline_info
         self.additional_params = additional_params
+        if version_name is None:
+            self.version_name = '_'.join([f'{model_info}', str(int(time.time()))])
+        else:
+            self.version_name = version_name
+        self.save_folder_path = dispatcher.MODELS_FOLDER / self.version_name
+        utils.check_make_dirs(self.save_folder_path)
+        self.save_meta_feature = save_meta_feature
+        self.make_test_prediction = make_test_prediction
+        self.dict_meta = {}
+        self.dict_test_preds = {}
 
-    def _run_cv_one(self, df, fold):
+    def _run_cv_one(self, df, fold, test_df):
         train_df = df[df['kfold'].isin(FOLD_MAPPING.get(fold))]
         valid_df = df[df['kfold'] == fold]
+        train_df = train_df.drop(['kfold'], axis=1)
+        valid_df = valid_df.drop(['kfold'], axis=1)
 
         y_train = train_df[['target']]
         y_valid = valid_df[['target']]
@@ -86,14 +101,16 @@ class TrainWithFEP_CV:
         if self.feature_engineer_pipeline:
             train_df = self.feature_engineer_pipeline.fit_transform(train_df)
             valid_df = self.feature_engineer_pipeline.fit_transform(valid_df)
-            joblib.dump(self.feature_engineer_pipeline, f"{dispatcher.MODELS_FOLDER}/{self.model}_{self.feature_engineer_pipeline_name}_{fold}_fep.pkl")
+            save_fep_name = f"{self.save_folder_path}/{self.model}_{self.feature_engineer_pipeline_name}_{fold}_fep.pkl"
+            joblib.dump(self.feature_engineer_pipeline, save_fep_name)
         if self.target_pipeline:
             y_train = self.target_pipeline.fit_transform(y_train)
             y_valid = self.target_pipeline.fit_transform(y_valid)
 
             y_train = np.ravel(y_train)
             y_valid = np.ravel(y_valid)
-            # joblib.dump(target_process, f"{dispatcher.MODELS_FOLDER}/{self.model}_{self.target_pipeline_name}_{fold}_tp.pkl")
+            save_tp_name = f"{self.save_folder_path}/{self.model}_{self.target_pipeline_name}_{fold}_tp.pkl"
+            joblib.dump(self.target_pipeline, save_tp_name)
 
         trained_model = dispatcher.MODELS[self.model]
         trained_model_params = trained_model.get_params()
@@ -101,27 +118,48 @@ class TrainWithFEP_CV:
         trained_model.set_params(**trained_model_params)
         trained_model.fit(train_df, y_train)
         val_preds = trained_model.predict_proba(valid_df)[:, 1]
+        if self.save_meta_feature:
+            self.dict_meta[fold] = val_preds
+        if self.make_test_prediction:
+            if self.feature_engineer_pipeline:
+                test_df = self.feature_engineer_pipeline.fit_transform(test_df)
+            test_preds = trained_model.predict_proba(test_df)[:, 1]
+            self.dict_test_preds[fold] = test_preds
 
         # Save the model (Since dependencies are transformed into df already)
-        joblib.dump(trained_model, f"models/{self.model}_{fold}.pkl")
+        save_model_name = f"{self.save_folder_path}/{self.model}_{fold}.pkl"
+        joblib.dump(trained_model, save_model_name)
 
         return trained_model, val_preds, y_valid
 
-    def run_cv(self, df, with_visualize_roc=False):
+    def run_cv(self, df, with_visualize_roc=False, test_df=None):
+        if self.make_test_prediction and test_df is None:
+            raise Exception('Should provide df_test if you want to make prediction also')
         trained_models = []
         list_val_preds = []
         list_y_valid = []
         num_fold = len(np.unique(df['kfold'].values))
         for fold in tqdm(range(num_fold)):
-            trained_model, val_preds, y_valid = self._run_cv_one(df, fold)
+            trained_model, val_preds, y_valid = self._run_cv_one(df, fold, test_df=test_df)
             trained_models.append(trained_model)
             list_val_preds.append(val_preds)
             list_y_valid.append(y_valid)
         if with_visualize_roc:
             saved = f'ROC_Curve_{self.model}_{self.feature_engineer_pipeline_name}.png'
             plotting_ROC_curves(list_y_valid, list_val_preds, saved)
+        if self.save_meta_feature:
+            save_meta_name =  f"{self.save_folder_path}/{self.model}_all_meta_{num_fold}_folds.pkl"
+            joblib.dump(self.dict_meta, save_meta_name)
+        if self.make_test_prediction:
+            # Here, we first assume the average
+            all_predictions = list(self.dict_test_preds.values())
+            # print(type(all_predictions))
+            # print(all_predictions[0])
+            predictions = np.sum(all_predictions, axis=0) / num_fold
+        else:
+            predictions = None
 
-        return trained_models
+        return trained_models, predictions
 
 
 class SimpleGridSearchPipelineBinaryClf:
@@ -162,11 +200,14 @@ class SimpleGridSearchPipelineBinaryClf:
 if __name__ == '__main__':
     print('Hi')
     df = pd.read_csv(dispatcher.CUSTOM_BASELINE_FEATURE_CSV)
+    test_df = pd.read_csv(dispatcher.CUSTOM_BASELINE_TEST_CSV)
     sample_cv = cross_validation.CrossValidation(df=df,
                                                  target_cols=['target'],
                                                  problem_type='binary_classification',
                                                  num_folds=5)
     new_df = sample_cv.split()
+    print(new_df.shape)
+    print(test_df.shape)
     feature_process, target_process = feature_generator.FEATURES[FEATURE_SET]
     if GRID_SEARCH == 'true':
         simple_grid_search = SimpleGridSearchPipelineBinaryClf(model_info=MODEL,
@@ -180,6 +221,11 @@ if __name__ == '__main__':
     training = TrainWithFEP_CV(model_info=MODEL,
                                additional_params=grid_search_best_params,
                                feature_engineer_pipeline_info=feature_process,
-                               target_pipeline_info=target_process)
-    training.run_cv(new_df, with_visualize_roc=True)
-
+                               target_pipeline_info=target_process,
+                               save_meta_feature=True,
+                               make_test_prediction=True)
+    trained_models, preds = training.run_cv(new_df, with_visualize_roc=True, test_df=test_df)
+    submission_df = pd.read_csv(dispatcher.WSAMPLE_SUBMISSION)
+    submission_df['Pred'] = preds
+    submission_path = dispatcher.SUBMISSION_FOLDER / f'{training.version_name}.csv'
+    submission_df.to_csv(submission_path, index=False)

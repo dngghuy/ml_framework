@@ -84,9 +84,27 @@ if __name__ == '__main__':
     tourney_result = pd.concat((tourney_win_result, tourney_lose_result)).reset_index(drop=True)
 
     utils.check_make_dirs(dispatcher.CUSTOM_DATA_FOLDER)
-    tourney_result.to_csv(dispatcher.CUSTOM_BASELINE_FEATURE_CSV, index=False)
-
-
-
-
-
+    # tourney_result.to_csv(dispatcher.CUSTOM_BASELINE_FEATURE_CSV, index=False)
+    print('Prepare baseline test df')
+    test_df = pd.read_csv(dispatcher.WSAMPLE_SUBMISSION)
+    test_df['Season'] = test_df['ID'].map(lambda x: int(x[:4]))
+    test_df['WTeamID'] = test_df['ID'].map(lambda x: int(x[5:9]))
+    test_df['LTeamID'] = test_df['ID'].map(lambda x: int(x[10:14]))
+    test_df = pd.merge(test_df, tourney_seed, left_on=['Season', 'WTeamID'], right_on=['Season', 'TeamID'], how='left')
+    test_df.rename(columns={'Seed': 'Seed1'}, inplace=True)
+    test_df = test_df.drop('TeamID', axis=1)
+    test_df = pd.merge(test_df, tourney_seed, left_on=['Season', 'LTeamID'], right_on=['Season', 'TeamID'], how='left')
+    test_df.rename(columns={'Seed': 'Seed2'}, inplace=True)
+    test_df = test_df.drop('TeamID', axis=1)
+    test_df = pd.merge(test_df, season_score, left_on=['Season', 'WTeamID'], right_on=['Season', 'TeamID'], how='left')
+    test_df.rename(columns={'Score': 'ScoreT1'}, inplace=True)
+    test_df = test_df.drop('TeamID', axis=1)
+    test_df = pd.merge(test_df, season_score, left_on=['Season', 'LTeamID'], right_on=['Season', 'TeamID'], how='left')
+    test_df.rename(columns={'Score': 'ScoreT2'}, inplace=True)
+    test_df = test_df.drop('TeamID', axis=1)
+    test_df['Seed1'] = test_df['Seed1'].map(lambda x: get_seed(x))
+    test_df['Seed2'] = test_df['Seed2'].map(lambda x: get_seed(x))
+    test_df['Seed_diff'] = test_df['Seed1'] - test_df['Seed2']
+    test_df['ScoreT_diff'] = test_df['ScoreT1'] - test_df['ScoreT2']
+    test_df = test_df.drop(['ID', 'Pred', 'Season', 'WTeamID', 'LTeamID'], axis=1)
+    test_df.to_csv(dispatcher.CUSTOM_BASELINE_TEST_CSV, index=False)

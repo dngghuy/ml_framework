@@ -43,7 +43,10 @@ class Drop(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        return X.drop(self.key_drop, axis=1)
+        try:
+            return X.drop(self.key_drop, axis=1)
+        except KeyError as e:
+            return X
 
 
 # class ToArray(BaseEstimator, TransformerMixin):
