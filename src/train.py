@@ -70,6 +70,13 @@ def plotting_ROC_curves(list_y_true, list_y_pred_prob, saved_name=None):
     fig.savefig(dispatcher.VISUALIZE_FOLDER / saved_name)
 
 
+class CustomTrainWithFEP_CV:
+    def __init__(self, model_info, version_name=None, additional_params={},
+                  feature_engineer_pipeline_info=None, target_pipeline_info=None,
+                  save_meta_feature=False, make_test_prediction=False):
+
+
+
 class TrainWithFEP_CV:
     def __init__(self, model_info, version_name=None, additional_params={},
                  feature_engineer_pipeline_info=None, target_pipeline_info=None,
@@ -205,27 +212,31 @@ if __name__ == '__main__':
                                                  target_cols=['target'],
                                                  problem_type='binary_classification',
                                                  num_folds=5)
-    new_df = sample_cv.split()
-    print(new_df.shape)
-    print(test_df.shape)
-    feature_process, target_process = feature_generator.FEATURES[FEATURE_SET]
-    if GRID_SEARCH == 'true':
-        simple_grid_search = SimpleGridSearchPipelineBinaryClf(model_info=MODEL,
-                                                               feature_engineer_pipeline_info=feature_process,
-                                                               target_pipeline_info=target_process)
-        results = simple_grid_search.run_grid_search(df=df)
-        grid_search_best_params = results.best_params_
-    else:
-        grid_search_best_params = {}
-
-    training = TrainWithFEP_CV(model_info=MODEL,
-                               additional_params=grid_search_best_params,
-                               feature_engineer_pipeline_info=feature_process,
-                               target_pipeline_info=target_process,
-                               save_meta_feature=True,
-                               make_test_prediction=True)
-    trained_models, preds = training.run_cv(new_df, with_visualize_roc=True, test_df=test_df)
-    submission_df = pd.read_csv(dispatcher.WSAMPLE_SUBMISSION)
-    submission_df['Pred'] = preds
-    submission_path = dispatcher.SUBMISSION_FOLDER / f'{training.version_name}.csv'
-    submission_df.to_csv(submission_path, index=False)
+    print(df['Season'].unique())
+    print(type(df['Season'].unique()))
+    print(test_df['Season'].unique())
+    # new_df = sample_cv.split()
+    # print(new_df.shape)
+    # print(test_df.shape)
+    # feature_process, target_process = feature_generator.FEATURES[FEATURE_SET]
+    # if GRID_SEARCH == 'true':
+    #     simple_grid_search = SimpleGridSearchPipelineBinaryClf(model_info=MODEL,
+    #                                                            feature_engineer_pipeline_info=feature_process,
+    #                                                            target_pipeline_info=target_process)
+    #     results = simple_grid_search.run_grid_search(df=df)
+    #     grid_search_best_params = results.best_params_
+    # else:
+    #     grid_search_best_params = {}
+    #
+    # training = TrainWithFEP_CV(model_info=MODEL,
+    #                            additional_params=grid_search_best_params,
+    #                            feature_engineer_pipeline_info=feature_process,
+    #                            target_pipeline_info=target_process,
+    #                            save_meta_feature=True,
+    #                            make_test_prediction=True)
+    # trained_models, preds = training.run_cv(new_df, with_visualize_roc=True, test_df=test_df)
+    # submission_df = pd.read_csv(dispatcher.WSAMPLE_SUBMISSION)
+    # print()
+    # submission_df['Pred'] = preds
+    # submission_path = dispatcher.SUBMISSION_FOLDER / f'{training.version_name}.csv'
+    # submission_df.to_csv(submission_path, index=False)
